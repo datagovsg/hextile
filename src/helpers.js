@@ -25,10 +25,10 @@ export function dotProduct (v1, v2) {
 
 export function linearSolver ([alpha1, beta1], [alpha2, beta2]) {
   const DET = alpha1 * beta2 - alpha2 * beta1
-  return function (k1, k2) {
+  return function (d1, d2) {
     return [
-      (beta2 * k1 - beta1 * k2) / DET,
-      (-alpha2 * k1 + alpha1 * k2) / DET
+      (beta2 * d1 - beta1 * d2) / DET,
+      (-alpha2 * d1 + alpha1 * d2) / DET
     ]
   }
 }
