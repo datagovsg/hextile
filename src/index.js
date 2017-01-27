@@ -61,14 +61,15 @@ module.exports = function (geojson, options) {
 
   const forward = options.projection.forward
   const inverse = options.projection.inverse
-
-  let output = {}
+  const step = options.shape === 'hexagon' ? (Math.sqrt(3) / 4) : 1
+  const grid = {}
+  let output = []
 
   function dRange (beta, endpoints) {
     const dValues = endpoints.map(ep => dotProduct(beta, ep))
     return {
-      min: Math.ceil(min(dValues) - 1),
-      max: Math.floor(max(dValues) + 1)
+      min: Math.ceil(min(dValues) / step - 1),
+      max: Math.floor(max(dValues) / step + 1)
     }
   }
 
@@ -79,29 +80,16 @@ module.exports = function (geojson, options) {
     forward([bbox[2], bbox[3]])
   ]
 
-  const beta0 = polar2cartesian(options.tilt)
-  const dRange0 = dRange(beta0, corners)
-
   if (options.shape === 'square') {
+    const beta0 = polar2cartesian(options.tilt)
     const beta1 = polar2cartesian(options.tilt + 90)
+    const dRange0 = dRange(beta0, corners)
     const dRange1 = dRange(beta1, corners)
 
-    const getIntersection = linearSolver(beta0, beta1)
-
-    for (let i = dRange0.min; i <= dRange0.max; i++) {
-      output[i] = {}
-      for (let j = dRange1.min; j <= dRange1.max; j++) {
-        output[i][j] = {
-          properties: {
-            address: getIntersection(i + 0.5, j + 0.5)
-          },
-          coordinates: [[
-            getIntersection(i, j),
-            getIntersection(i, j + 1),
-            getIntersection(i + 1, j + 1),
-            getIntersection(i + 1, j)
-          ]]
-        }
+    for (let i = dRange0.min - 1; i <= dRange0.max + 1; i++) {
+      grid[i] = {}
+      for (let j = dRange1.min - 1; j <= dRange1.max + 1; j++) {
+        grid[i][j] = {}
       }
     }
 
@@ -121,8 +109,8 @@ module.exports = function (geojson, options) {
           for (let i = iRange.min; i <= iRange.max; i++) {
             const intersection = iIntersection(i, d)
             const j = Math.floor(dotProduct(beta1, intersection))
-            output[i][j].keep = true
-            output[i - 1][j].keep = true
+            grid[i][j].keep = true
+            grid[i - 1][j].keep = true
           }
 
           const jRange = dRange(beta1, [linearRing[n], linearRing[n + 1]])
@@ -130,12 +118,32 @@ module.exports = function (geojson, options) {
           for (let j = jRange.min; j <= jRange.max; j++) {
             const intersection = jIntersection(j, d)
             const i = Math.floor(dotProduct(beta0, intersection))
-            output[i][j].keep = true
-            output[i][j - 1].keep = true
+            grid[i][j].keep = true
+            grid[i][j - 1].keep = true
           }
         }
       })
     })
+
+    const getIntersection = linearSolver(beta0, beta1)
+
+    for (let i in grid) {
+      for (let j in grid[i]) {
+        output.push({
+          id: [i, j].join('.').replace(/-/g, 'M'),
+          properties: {
+            address: getIntersection(i + 0.5, j + 0.5)
+          },
+          coordinates: [[
+            getIntersection(i, j),
+            getIntersection(i, j + 1),
+            getIntersection(i + 1, j + 1),
+            getIntersection(i + 1, j)
+          ]],
+          keep: grid.keep
+        })
+      }
+    }
 
     // const minX = Math.floor((bbox[0] - options.center[0]) / dx)
     // const maxX = Math.ceil((bbox[2] - options.center[0]) / dx)
@@ -161,20 +169,18 @@ module.exports = function (geojson, options) {
     //   }
     // }
   } else if (options.shape === 'hexagon') {
+    const beta0 = polar2cartesian(options.tilt)
     const beta1 = polar2cartesian(options.rotate + 60)
     const beta2 = polar2cartesian(options.rotate + 120)
+    const dRange0 = dRange(beta0, corners)
     const dRange1 = dRange(beta1, corners)
 
-    const getIntersection01 = linearSolver(beta0, beta1)
-    const getIntersection12 = linearSolver(beta1, beta2)
-    const getIntersection20 = linearSolver(beta2, beta0)
-
-    for (let i = dRange0.min; i <= dRange0.max; i++) {
+    for (let i = dRange0.min - 2; i <= dRange0.max + 2; i++) {
       output[i] = {}
-      for (let j = dRange1.min; j <= dRange1.max; j++) {
-        output[i][j] = {}
-        output[i][j][1 - i - j] = {}
-        output[i][j][-1 - i - j] = {}
+      for (let j = dRange1.min - 2; j <= dRange1.max + 2; j++) {
+        grid[i][j] = {}
+        grid[i][j][1 - i - j] = {}
+        grid[i][j][-1 - i - j] = {}
       }
     }
 
@@ -192,49 +198,83 @@ module.exports = function (geojson, options) {
           const iRange = dRange(beta0, [linearRing[n], linearRing[n + 1]])
           const iIntersection = linearSolver(beta0, beta)
           for (let i = iRange.min; i <= iRange.max; i++) {
-            const intersection = iIntersection(i, d)
-            const j = Math.floor(dotProduct(beta1, intersection))
-            const k = Math.floor(dotProduct(beta2, intersection))
+            const intersection = iIntersection(i * step, d)
+            const j = Math.floor(dotProduct(beta1, intersection) / step)
+            const k = Math.floor(dotProduct(beta2, intersection) / step)
             if (i + j + k === 1 || i + j + k === -1) {
-              output[i][j][k].keep = true
-              output[i][j + 1][k + 1].keep = true
+              grid[i][j][k].keep = true
+              grid[i][j + 1][k + 1].keep = true
             } else {
-              output[i][j + 1][k].keep = true
-              output[i][j][k + 1].keep = true
+              grid[i][j + 1][k].keep = true
+              grid[i][j][k + 1].keep = true
             }
           }
 
           const jRange = dRange(beta2, [linearRing[n], linearRing[n + 1]])
           const jIntersection = linearSolver(beta1, beta)
           for (let j = jRange.min; j <= jRange.max; j++) {
-            const intersection = jIntersection(j, d)
-            const i = Math.floor(dotProduct(beta0, intersection))
-            const k = Math.floor(dotProduct(beta2, intersection))
+            const intersection = jIntersection(j * step, d)
+            const i = Math.floor(dotProduct(beta0, intersection) / step)
+            const k = Math.floor(dotProduct(beta2, intersection) / step)
             if (i + j + k === 1 || i + j + k === -1) {
-              output[i][j][k].keep = true
-              output[i + 1][j][k + 1].keep = true
+              grid[i][j][k].keep = true
+              grid[i + 1][j][k + 1].keep = true
             } else {
-              output[i + 1][j][k].keep = true
-              output[i][j][k + 1].keep = true
+              grid[i + 1][j][k].keep = true
+              grid[i][j][k + 1].keep = true
             }
           }
 
           const kRange = dRange(beta2, [linearRing[n], linearRing[n + 1]])
           const kIntersection = linearSolver(beta2, beta)
           for (let k = kRange.min; k <= kRange.max; k++) {
-            const intersection = kIntersection(k, d)
-            const i = Math.floor(dotProduct(beta0, intersection))
-            const j = Math.floor(dotProduct(beta1, intersection))
+            const intersection = kIntersection(k * step, d)
+            const i = Math.floor(dotProduct(beta0, intersection) / step)
+            const j = Math.floor(dotProduct(beta1, intersection) / step)
             if (i + j + k === 1 || i + j + k === -1) {
-              output[i][j][k].keep = true
-              output[i + 1][j + 1][k].keep = true
+              grid[i][j][k].keep = true
+              grid[i + 1][j + 1][k].keep = true
             } else {
-              output[i + 1][j][k].keep = true
-              output[i][j + 1][k].keep = true
+              grid[i + 1][j][k].keep = true
+              grid[i][j + 1][k].keep = true
             }
           }
         }
       })
+
+      const getIntersection = linearSolver(beta0, beta1)
+
+      for (let i in grid) {
+        if (!grid[i - 1] || !grid[i + 1]) continue
+        for (let j in grid[i]) {
+          if (!grid[j - 1] || !grid[j + 1]) continue
+          if (j % 3 === i % 3) {
+            const k = -i - j
+            output.push({
+              id: [i, j].join('.').replace(/-/g, 'M'),
+              properties: {
+                address: getIntersection(i * step, j * step)
+              },
+              coordinates: [[
+                getIntersection(i * step, (j - 1) * step),
+                getIntersection((i + 1) * step, j * step),
+                getIntersection((i + 1) * step, (j + 1) * step),
+                getIntersection(i * step, (j + 1) * step),
+                getIntersection((i - 1) * step, j * step),
+                getIntersection((i - 1) * step, (j - 1) * step)
+              ]],
+              keep: [
+                [i, j, k + 1],
+                [i + 1, j, k],
+                [i, j + 1, k],
+                [i, j, k - 1],
+                [i - 1, j, k],
+                [i, j - 1, k]
+              ].some(([i, j, k]) => grid[i][j][k].keep)
+            })
+          }
+        }
+      }
     })
     // const minX = Math.floor((bbox[0] - options.center[0]) / (dx * 0.75))
     // const maxX = Math.ceil((bbox[2] - options.center[0]) / (dx * 0.75))
@@ -263,4 +303,19 @@ module.exports = function (geojson, options) {
     //   }
     // }
   }
+}
+
+function isInside ([lng, lat], linearRing) {
+  let isInside = false
+  for (let i = 1; i < linearRing.length; i++) {
+    const deltaYplus = linearRing[i][1] - lat
+    const deltaYminus = lat - linearRing[i - 1][1]
+    if (deltaYplus > 0 && deltaYminus <= 0) continue
+    if (deltaYplus <= 0 && deltaYminus > 0) continue
+    const deltaX = (deltaYplus * linearRing[i - 1][0] + deltaYminus * linearRing[i][0]) /
+      (deltaYplus + deltaYminus) - lng
+    if (deltaX <= 0) continue
+    isInside = !isInside
+  }
+  return isInside
 }
