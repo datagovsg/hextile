@@ -4,10 +4,10 @@ export function equirectangular (center, width, radius = 6371000) {
   const dx = width / (Math.cos(center[1] / rad2deg) * radius) * rad2deg
   return {
     forward ([lng, lat]) {
-      return [lng / dx, lat / dy]
+      return [(lng - center[0]) / dx, (lat - center[1]) / dy]
     },
-    back ([x, y]) {
-      return [x * dx, y * dy]
+    inverse ([x, y]) {
+      return [center[0] + x * dx, center[1] + y * dy]
     }
   }
 }
@@ -31,4 +31,19 @@ export function linearSolver ([alpha1, beta1], [alpha2, beta2]) {
       (-alpha2 * d1 + alpha1 * d2) / DET
     ]
   }
+}
+
+export function isInside ([lng, lat], linearRing) {
+  let isInside = false
+  for (let i = 1; i < linearRing.length; i++) {
+    const deltaYplus = linearRing[i][1] - lat
+    const deltaYminus = lat - linearRing[i - 1][1]
+    if (deltaYplus > 0 && deltaYminus <= 0) continue
+    if (deltaYplus <= 0 && deltaYminus > 0) continue
+    const deltaX = (deltaYplus * linearRing[i - 1][0] + deltaYminus * linearRing[i][0]) /
+      (deltaYplus + deltaYminus) - lng
+    if (deltaX <= 0) continue
+    isInside = !isInside
+  }
+  return isInside
 }
