@@ -1,2 +1,2 @@
-# fishnet
-Overlay polygon with equal sized tiles (like a fishnet)
+# hextile
+Generate tile representations of polygon objects
