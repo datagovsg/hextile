@@ -8,7 +8,7 @@ import {
 /**
  * @param {(Object|Object[])} geojson - https://tools.ietf.org/html/rfc7946
  * @param {('square'|'hexagon')} options.shape - default 'square'
- * @param {number} options.tilt - default 0
+ * @param {number} options.rotate - default 0
  * @param {number} options.width - default 1000, min 500, max 50000
  * @param {[number, number]} options.center - [lon, lat] of grid origin
  * @param {Object} options.projection - optional, overwrites center and width
@@ -56,7 +56,7 @@ module.exports = function (geojson, options = {}) {
 
   // set default options
   options.shape = options.shape || 'square'
-  options.tilt = options.tilt || 0
+  options.rotate = options.rotate || 0
   options.width = options.width || 1000
   options.width = Math.max(options.width, 500)
   options.width = Math.min(options.width, 20000)
