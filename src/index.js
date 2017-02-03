@@ -150,7 +150,7 @@ module.exports = function (geojson, options = {}) {
         const j = +_j
         output.push({
           id: [i, j].join('.').replace(/-/g, 'M'),
-          type: 'feature',
+          type: 'Feature',
           properties: {
             address: inverse(getIntersection(i + 0.5, j + 0.5))
           },
@@ -257,7 +257,7 @@ module.exports = function (geojson, options = {}) {
           const k = j - i
           output.push({
             id: [i, j].join('.').replace(/-/g, 'M'),
-            type: 'feature',
+            type: 'Feature',
             properties: {
               address: inverse(getIntersection(i * step, j * step))
             },
