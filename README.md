@@ -52,7 +52,7 @@ hextile(geojson, {shape: 'hexagon', tilt: 90})
 // by default is set to center of geojson's bbox
 // here we choose a latitude far away from equator
 // to illustrate the distortion due to Earth's spherical nature
-hextile(geojson, {shape: 'hexagon', center: [103.8, 60]})
+hextile(geojson, {shape: 'square', width: 1000, center: [103.8, 60]})
 ```
 ![center](static/center.png)
 
