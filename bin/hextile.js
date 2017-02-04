@@ -5,7 +5,7 @@ const fs = require('fs')
 const hextile = require('../dist/index')
 
 program
-  .description('Generate tile representations of polygon objects')
+  .description('Generate tile representations of polygon objects on map')
   .usage('[options] <infile> <outfile>')
   .option('-s --shape <shape>', 'square or hexagon tile', /^(square|hexagon)$/i, 'square')
   .option('-w --width <metre>', 'set tile width', parseFloat, 1000)

@@ -8,12 +8,12 @@ import {
 /**
  * @param {(Object|Object[])} geojson - https://tools.ietf.org/html/rfc7946
  * @param {('square'|'hexagon')} options.shape - default 'square'
- * @param {number} options.rotate - default 0
- * @param {number} options.width - default 1000, min 500, max 50000
+ * @param {number} options.width - in metre, default 1000, min 500, max 500000
+ * @param {number} options.tilt - in deg, default 0
  * @param {[number, number]} options.center - [lon, lat] of grid origin
- * @param {Object} options.projection - optional, overwrites center and width
- * @param {Function} options.projection.forward - map lnglat to grid coordinates
- * @param {Function} options.projection.inverse - map grid XY to lonlat
+ * @param {Object} options.projection
+ * @param {Function} options.projection.forward - map lonlat to grid coordinates
+ * @param {Function} options.projection.inverse - map grid coordinates to lonlat
  */
 module.exports = function (geojson, options = {}) {
   // normalize geojson input
@@ -59,7 +59,7 @@ module.exports = function (geojson, options = {}) {
   options.rotate = options.rotate || 0
   options.width = options.width || 1000
   options.width = Math.max(options.width, 500)
-  options.width = Math.min(options.width, 20000)
+  options.width = Math.min(options.width, 500000)
   options.center = options.center || [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2]
   options.projection = options.projection || equirectangular(options.center, options.width)
 

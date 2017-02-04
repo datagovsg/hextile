@@ -1,7 +1,7 @@
 {
   "name": "hextile",
-  "version": "1.0.5",
-  "description": "Generate tile representations of polygon objects",
+  "version": "1.0.6",
+  "description": "Generate tile representations of polygon objects on map",
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && mkdir dist && babel src --out-dir dist",
