@@ -84,9 +84,9 @@ module.exports = function (geojson, options = {}) {
 
   const corners = [
     forward([bbox[0], bbox[1]]),
+    forward([bbox[2], bbox[3]]),
     forward([bbox[0], bbox[3]]),
-    forward([bbox[2], bbox[1]]),
-    forward([bbox[2], bbox[3]])
+    forward([bbox[2], bbox[1]])
   ]
 
   if (options.shape === 'square') {
@@ -251,7 +251,7 @@ module.exports = function (geojson, options = {}) {
       if (!grid[i - 1] || !grid[i + 1]) continue
       for (let _j in grid[i]) {
         const j = +_j
-        if (!grid[j - 1] || !grid[j + 1]) continue
+        if (!grid[i][j - 1] || !grid[i][j + 1]) continue
         if ((i + j) % 3 === 0) {
           // combines six triangular grid cells into one hexagon grid cell
           const k = j - i

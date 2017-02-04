@@ -1,6 +1,6 @@
 {
   "name": "hextile",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Generate tile representations of polygon objects",
   "main": "dist/index.js",
   "scripts": {
