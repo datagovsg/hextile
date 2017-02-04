@@ -152,7 +152,8 @@ module.exports = function (geojson, options = {}) {
           id: [i, j].join('.').replace(/-/g, 'M'),
           type: 'Feature',
           properties: {
-            address: inverse(getIntersection(i + 0.5, j + 0.5))
+            address: [i, j],
+            center: inverse(getIntersection(i + 0.5, j + 0.5))
           },
           geometry: {
             type: 'Polygon',
@@ -259,7 +260,8 @@ module.exports = function (geojson, options = {}) {
             id: [i, j].join('.').replace(/-/g, 'M'),
             type: 'Feature',
             properties: {
-              address: inverse(getIntersection(i * step, j * step))
+              address: [i, j],
+              center: inverse(getIntersection(i * step, j * step))
             },
             geometry: {
               type: 'Polygon',
@@ -294,15 +296,15 @@ module.exports = function (geojson, options = {}) {
       if center of grid cell lies inside one of the input polygons,
       include that grid cell in final output
     */
-    const address = feature.properties.address
+    const center = feature.properties.center
     return input.some(polygon => {
-      if (address[0] < polygon.bbox[0]) return false
-      if (address[1] < polygon.bbox[1]) return false
-      if (address[0] > polygon.bbox[2]) return false
-      if (address[1] > polygon.bbox[3]) return false
+      if (center[0] < polygon.bbox[0]) return false
+      if (center[1] < polygon.bbox[1]) return false
+      if (center[0] > polygon.bbox[2]) return false
+      if (center[1] > polygon.bbox[3]) return false
       const [outerRing, ...innerRings] = polygon.coordinates
-      return isInside(address, outerRing) &&
-        innerRings.every(innerRing => !isInside(address, innerRing))
+      return isInside(center, outerRing) &&
+        innerRings.every(innerRing => !isInside(center, innerRing))
     })
   })
 
