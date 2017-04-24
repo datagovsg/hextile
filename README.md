@@ -14,6 +14,7 @@ Refer to IETF's [RFC7946](https://tools.ietf.org/html/rfc7946) for accepted form
 
 ```javascript
 // alternatively, pass in a bounding box (bbox) input
+
 const southWest = [103.582, 1.16]
 const northEast = [104.1647, 1.48073]
 const bbox = [southWest[0], southWest[1], northEast[0], northEast[1]]
