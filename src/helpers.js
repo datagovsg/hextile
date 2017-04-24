@@ -47,3 +47,12 @@ export function isInside ([lng, lat], linearRing) {
   }
   return isInside
 }
+
+export function bbox2geojson (bbox) {
+  return {
+    type: 'Polygon',
+    coordinates: [
+      [[bbox[0], bbox[1]], [bbox[2], bbox[1]], [bbox[2], bbox[3]], [bbox[0], bbox[3]], [bbox[0], bbox[1]]]
+    ]
+  }
+}

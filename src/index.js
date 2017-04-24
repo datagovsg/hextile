@@ -2,11 +2,11 @@ import min from 'lodash/min'
 import max from 'lodash/max'
 
 import {
-  equirectangular, polar2cartesian, dotProduct, linearSolver, isInside
+  equirectangular, polar2cartesian, dotProduct, linearSolver, isInside, bbox2geojson
 } from './helpers'
 
 /**
- * @param {(Object|Object[])} geojson - https://tools.ietf.org/html/rfc7946
+ * @param {(Object|Object[]|[number, number, number, number])} geojson|bbox - https://tools.ietf.org/html/rfc7946
  * @param {('square'|'hexagon')} options.shape - default 'square'
  * @param {number} options.width - in metre, default 1000, min 500, max 500000
  * @param {number} options.tilt - in deg, default 0
@@ -16,6 +16,14 @@ import {
  * @param {Function} options.projection.inverse - map grid coordinates to lonlat
  */
 module.exports = function (geojson, options = {}) {
+  if (
+    geojson instanceof Array &&
+    geojson.length === 4 &&
+    geojson.every(v => typeof v === 'number')
+  ) {
+    geojson = bbox2geojson(geojson)
+  }
+
   // normalize geojson input
   let input = []
   function extractPolygons (node) {
@@ -56,7 +64,7 @@ module.exports = function (geojson, options = {}) {
 
   // set default options
   options.shape = options.shape || 'square'
-  options.rotate = options.rotate || 0
+  options.tilt = options.tilt || 0
   options.width = options.width || 1000
   options.width = Math.max(options.width, 500)
   options.width = Math.min(options.width, 500000)
